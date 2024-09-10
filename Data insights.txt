@@ -1,0 +1,26 @@
+Data Insights and Analysis
+After exploring the data, the following insights were discovered:
+
+Country Distribution
+
+90.67% of the dataset consists of restaurants listed in India, followed by USA (4.45%).
+
+Online Delivery Availability
+
+Out of 15 countries, only 2 countries offer online delivery options:
+28.01% of restaurants in India.
+46.67% of restaurants in UAE.
+
+Indian Restaurant Analysis
+
+Connaught Place (New Delhi) has the highest number of listed restaurants (122), followed by Rajouri Garden (99) and Shahdara (87).
+The most popular cuisine in Connaught Place is North Indian.
+
+Table Booking Facility
+
+Only 54 out of 122 restaurants in Connaught Place offer table booking facilities.
+Restaurants with table booking facilities have an average rating of 3.9/5, while those without have an average rating of 3.7/5.
+
+Best Moderately Priced Restaurant
+
+The best moderately priced restaurant (with an average cost for two < 1000, rating > 4, votes > 4, and offering both table booking and online delivery) is India Restaurant in Kolkata, India (RestaurantID: 20747), offering Indian cuisine.
