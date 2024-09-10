@@ -1,0 +1,115 @@
+-- Check Datatype of table
+SELECT COLUMN_NAME, DATA_TYPE 
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'ZomatoData1';
+
+-- Check tables in all databases
+SELECT DISTINCT(TABLE_SCHEMA), TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS;
+
+-- Checking for duplicates
+SELECT RestaurantID, COUNT(RestaurantID) 
+FROM ZomatoData1
+GROUP BY RestaurantID
+ORDER BY COUNT(RestaurantID) DESC;
+
+-- Removing unwanted rows
+DELETE FROM ZomatoData1 
+WHERE CountryCode IN ('Bar', 'Grill', 'Bakers & More', 'Chowringhee Lane', 'Grill & Bar', 'Chinese');
+
+DELETE FROM ZomatoData1 
+WHERE RestaurantID = '18306543';
+
+-- Adding a new column COUNTRY_NAME and merging country details
+ALTER TABLE ZomatoData1 ADD COUNTRY_NAME VARCHAR(50);
+
+UPDATE ZomatoData1 A
+JOIN ZOMATO_COUNTRY B
+ON A.CountryCode = B.COUNTRYCODE
+SET A.COUNTRY_NAME = B.COUNTRY;
+
+-- Identifying and replacing misspelled words in CITY column
+SELECT DISTINCT City 
+FROM ZomatoData1
+WHERE City LIKE '%?%';
+
+UPDATE ZomatoData1 
+SET City = REPLACE(City, '?', 'i')
+WHERE City LIKE '%?%';
+
+-- Counting total restaurants in each city by country
+SELECT COUNTRY_NAME, City, COUNT(City) AS TOTAL_REST
+FROM ZomatoData1
+GROUP BY COUNTRY_NAME, City
+ORDER BY COUNTRY_NAME, City, TOTAL_REST DESC;
+
+-- Rolling count by Locality and City
+SELECT City, Locality, COUNT(Locality) AS COUNT_LOCALITY, 
+       SUM(COUNT(Locality)) OVER(PARTITION BY City ORDER BY Locality) AS ROLL_COUNT
+FROM ZomatoData1
+WHERE COUNTRY_NAME = 'INDIA'
+GROUP BY Locality, City
+ORDER BY City, Locality DESC;
+
+-- Dropping columns [Address], [LocalityVerbose]
+ALTER TABLE ZomatoData1 DROP COLUMN Address;
+ALTER TABLE ZomatoData1 DROP COLUMN LocalityVerbose;
+
+-- Checking for null or blank Cuisines and grouping by cuisines
+SELECT Cuisines, COUNT(Cuisines) 
+FROM ZomatoData1
+WHERE Cuisines IS NULL OR Cuisines = ''
+GROUP BY Cuisines
+ORDER BY COUNT(Cuisines) DESC;
+
+-- Checking Currency distribution
+SELECT Currency, COUNT(Currency) 
+FROM ZomatoData1
+GROUP BY Currency
+ORDER BY COUNT(Currency) DESC;
+
+-- Checking distinct values for Yes/No columns
+SELECT DISTINCT Has_Table_booking FROM ZomatoData1;
+SELECT DISTINCT Has_Online_delivery FROM ZomatoData1;
+SELECT DISTINCT Is_delivering_now FROM ZomatoData1;
+
+-- Dropping column Switch_to_order_menu
+ALTER TABLE ZomatoData1 DROP COLUMN Switch_to_order_menu;
+
+-- Checking distinct Price_range values
+SELECT DISTINCT Price_range FROM ZomatoData1;
+
+-- Checking min, max, avg of Votes column
+ALTER TABLE ZomatoData1 MODIFY COLUMN Votes INT;
+
+SELECT MIN(Votes) AS MIN_VT, AVG(Votes) AS AVG_VT, MAX(Votes) AS MAX_VT
+FROM ZomatoData1;
+
+-- Checking cost statistics by currency
+ALTER TABLE ZomatoData1 MODIFY COLUMN Average_Cost_for_two FLOAT;
+
+SELECT Currency, MIN(Average_Cost_for_two) AS MIN_CST, 
+       AVG(Average_Cost_for_two) AS AVG_CST, 
+       MAX(Average_Cost_for_two) AS MAX_CST
+FROM ZomatoData1
+GROUP BY Currency;
+
+-- Checking Rating statistics
+SELECT MIN(Rating), 
+       ROUND(AVG(Rating), 1), 
+       MAX(Rating)
+FROM ZomatoData1;
+
+-- Adding and updating RATE_CATEGORY column
+ALTER TABLE ZomatoData1 ADD RATE_CATEGORY VARCHAR(20);
+
+UPDATE ZomatoData1 
+SET RATE_CATEGORY = CASE
+  WHEN Rating >= 1 AND Rating < 2.5 THEN 'POOR'
+  WHEN Rating >= 2.5 AND Rating < 3.5 THEN 'GOOD'
+  WHEN Rating >= 3.5 AND Rating < 4.5 THEN 'GREAT'
+  WHEN Rating >= 4.5 THEN 'EXCELLENT'
+END;
+
+-- Final data check
+SELECT * FROM ZomatoData1;
