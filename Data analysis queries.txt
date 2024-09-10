@@ -1,0 +1,166 @@
+1. Rolling/Moving Count of Restaurants in Indian Cities
+
+SELECT COUNTRY_NAME, City, Locality, COUNT(Locality) AS TOTAL_REST,
+       SUM(COUNT(Locality)) OVER (PARTITION BY City ORDER BY Locality DESC) AS ROLLING_COUNT
+FROM ZomatoData1
+WHERE COUNTRY_NAME = 'INDIA'
+GROUP BY COUNTRY_NAME, City, Locality;
+
+
+2. Percentage of Restaurants in All the Countries
+
+-- Create View
+CREATE OR REPLACE VIEW TOTAL_COUNT AS
+SELECT COUNTRY_NAME, COUNT(RestaurantID) OVER () AS TOTAL_REST
+FROM ZomatoData1
+GROUP BY COUNTRY_NAME;
+
+-- Final Query
+WITH CT1 AS 
+   (SELECT COUNTRY_NAME, COUNT(RestaurantID) AS REST_COUNT
+    FROM ZomatoData1
+    GROUP BY COUNTRY_NAME)
+SELECT A.COUNTRY_NAME, A.REST_COUNT, 
+       ROUND(A.REST_COUNT / B.TOTAL_REST * 100, 2) AS PERCENTAGE
+FROM CT1 A 
+JOIN TOTAL_COUNT B ON A.COUNTRY_NAME = B.COUNTRY_NAME
+ORDER BY PERCENTAGE DESC;
+
+
+3. Countries and Percentage Providing Online Delivery Option
+
+-- Create View
+CREATE OR REPLACE VIEW COUNTRY_REST AS
+SELECT COUNTRY_NAME, COUNT(RestaurantID) AS REST_COUNT
+FROM ZomatoData1
+GROUP BY COUNTRY_NAME;
+
+-- Query
+SELECT A.COUNTRY_NAME, COUNT(A.RestaurantID) AS TOTAL_REST, 
+       ROUND(COUNT(A.RestaurantID) / B.REST_COUNT * 100, 2) AS PERCENTAGE
+FROM ZomatoData1 A 
+JOIN COUNTRY_REST B ON A.COUNTRY_NAME = B.COUNTRY_NAME
+WHERE A.Has_Online_delivery = 'YES'
+GROUP BY A.COUNTRY_NAME, B.REST_COUNT
+ORDER BY TOTAL_REST DESC;
+
+
+4. Cities and Localities with Max Restaurants in India
+
+WITH CT1 AS (
+    SELECT City, Locality, COUNT(RestaurantID) AS REST_COUNT
+    FROM ZomatoData1
+    WHERE COUNTRY_NAME = 'INDIA'
+    GROUP BY City, Locality
+)
+SELECT Locality, REST_COUNT
+FROM CT1 
+WHERE REST_COUNT = (SELECT MAX(REST_COUNT) FROM CT1);
+
+
+
+5. Types of Foods Available in India with Max Restaurants
+
+
+WITH CT1 AS (
+    SELECT City, Locality, COUNT(RestaurantID) AS REST_COUNT
+    FROM ZomatoData1
+    WHERE COUNTRY_NAME = 'INDIA'
+    GROUP BY City, Locality
+),
+CT2 AS (
+    SELECT Locality, REST_COUNT FROM CT1 WHERE REST_COUNT = (SELECT MAX(REST_COUNT) FROM CT1)
+)
+SELECT A.Locality, B.Cuisines
+FROM CT2 A 
+JOIN ZomatoData1 B ON A.Locality = B.Locality;
+
+
+
+6. Localities in India with the Lowest Restaurants
+
+
+WITH CT1 AS (
+    SELECT City, Locality, COUNT(RestaurantID) AS REST_COUNT
+    FROM ZomatoData1
+    WHERE COUNTRY_NAME = 'INDIA'
+    GROUP BY City, Locality
+)
+SELECT * FROM CT1 
+WHERE REST_COUNT = (SELECT MIN(REST_COUNT) FROM CT1)
+ORDER BY City;
+
+
+
+7. Restaurants Offering Table Booking in India
+
+
+WITH CT1 AS (
+    SELECT City, Locality, COUNT(RestaurantID) AS REST_COUNT
+    FROM ZomatoData1
+    WHERE COUNTRY_NAME = 'INDIA'
+    GROUP BY City, Locality
+),
+CT2 AS (
+    SELECT Locality, REST_COUNT FROM CT1 WHERE REST_COUNT = (SELECT MAX(REST_COUNT) FROM CT1)
+)
+SELECT Locality, COUNT(Has_Table_booking) AS TABLE_BOOKING_OPTION
+FROM ZomatoData1
+WHERE Locality IN (SELECT Locality FROM CT2)
+AND Has_Table_booking = 'YES'
+GROUP BY Locality;
+
+
+
+8. Rating Affecting Restaurants with and without Table Booking
+
+
+SELECT 'WITH_TABLE' AS TABLE_BOOKING_OPT, COUNT(Has_Table_booking) AS TOTAL_REST, 
+       ROUND(AVG(Rating), 2) AS AVG_RATING
+FROM ZomatoData1
+WHERE Has_Table_booking = 'YES'
+AND Locality = 'Connaught Place'
+UNION
+SELECT 'WITHOUT_TABLE' AS TABLE_BOOKING_OPT, COUNT(Has_Table_booking) AS TOTAL_REST, 
+       ROUND(AVG(Rating), 2) AS AVG_RATING
+FROM ZomatoData1
+WHERE Has_Table_booking = 'NO'
+AND Locality = 'Connaught Place';
+
+
+
+9. Average Rating of Restaurants Location Wise
+
+
+SELECT COUNTRY_NAME, City, Locality, 
+       COUNT(RestaurantID) AS TOTAL_REST, 
+       ROUND(AVG(CAST(Rating AS DECIMAL(3,2))), 2) AS AVG_RATING
+FROM ZomatoData1
+GROUP BY COUNTRY_NAME, City, Locality
+ORDER BY AVG_RATING DESC;
+
+
+
+10. Best Restaurants with Moderate Cost and Indian Cuisines in India
+
+
+SELECT *
+FROM ZomatoData1
+WHERE COUNTRY_NAME = 'INDIA'
+AND Has_Table_booking = 'YES'
+AND Has_Online_delivery = 'YES'
+AND Price_range <= 3
+AND Votes > 1000
+AND Average_Cost_for_two < 1000
+AND Rating > 4
+AND Cuisines LIKE '%INDIA%';
+
+
+11. Restaurants Offering Table Booking with High Rating
+
+SELECT Price_range, COUNT(Has_Table_booking) AS NO_OF_REST
+FROM ZomatoData1
+WHERE Rating >= 4.5
+AND Has_Table_booking = 'YES'
+GROUP BY Price_range;
+
